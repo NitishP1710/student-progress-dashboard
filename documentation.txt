@@ -1,0 +1,81 @@
+Student Progress Tracker:
+
+📚 Overview
+Student Progress Tracker is a full-stack web application designed to monitor and analyze the competitive programming 
+progress of students, specifically from Codeforces. The platform includes student data management, automatic syncing of 
+Codeforces performance, and visual dashboards to aid in performance tracking.
+
+⚙️ Tech Stack Used
+Frontend:
+        React: For building responsive and interactive UIs
+        Tailwind CSS: For utility-first and modern styling
+        Recharts: For graphing student progress data (line and bar charts)
+        Calendar Heatmap: Visual representation of daily submissions
+        Axios: For making HTTP requests to backend APIs
+Backend:
+       Node.js: JavaScript runtime for building scalable server-side applications
+       Express.js: Fast web framework for building RESTful APIs
+       MongoDB + Mongoose: NoSQL database for storing student records and analytics
+       Day.js: Lightweight date utility for formatting and calculations
+       Node-Cron: For scheduled jobs (automated syncing)
+       Nodemailer: For sending email notifications
+
+External APIs
+Codeforces API: Used to fetch rating, contest history, and problem submission data
+
+API Endpoints : Student APIs
+              GET /api/students → Fetch all students
+              POST /api/students → Add new student (name, email, phone, cfHandle)
+              POST /api/students/:id/sync → Sync Codeforces data for a student
+              GET /api/students/:id/details → Get full student data (ratings, submissions, etc.)
+
+ Detailed Use of .map() and Data Transformations
+ Rating Chart
+             const ratingData = student.contestHistory.map(c => ({
+              name: c.contestName,
+              rating: c.newRating
+            }));
+
+ Problem Bucket Chart
+             const problemBuckets = {};
+             student.submissionData.forEach(s => {
+             if (s.verdict === 'OK') {
+                 const bucket = Math.floor((s.problem.rating || 0) / 200) * 200;
+                 problemBuckets[bucket] = (problemBuckets[bucket] || 0) + 1;
+             }
+             });
+
+
+What is Cron?
+cron is a time-based job scheduler that is used to run tasks at specific intervals. In this project:
+Usage:
+      Runs a job every night at 2 AM
+      Automatically syncs all students’ Codeforces data
+
+Nodemailer Working:
+nodemailer is used to send emails to students who haven't submitted any problem in the last 7 days.
+
+step1 :After syncing, the backend checks recent submissions:
+       const recentSubmissions = submissions.filter(s =>
+         dayjs.unix(s.creationTimeSeconds).isAfter(dayjs().subtract(7, 'day'))
+       );
+
+step2 :If none found and reminders are enabled
+      if (recentSubmissions.length === 0 && student.reminderEmailEnabled) {
+        await sendReminderEmail(student);
+        student.reminderCount += 1;
+      }      
+
+Key Metrics Tracked:
+      Current Rating and Max Rating from Codeforces
+      Heatmap: Date-wise distribution of solved problems
+      Problem Solving by Difficulty Buckets: Aggregated count of solved problems grouped by rating
+      Problems Solved Today: Derived from today’s date in the heatmap
+      Total Unique Problems Solved: Calculated from submission data
+
+Data Flow Summary:
+      Frontend prompts for adding a new student.
+      Backend saves the record and immediately triggers Codeforces data sync.
+      Fetched data includes rating, contest history, and submission metadata.
+      Data is transformed and saved (heatmap, today/total problems).
+      UI displays rating chart, heatmap, bar graph, and stats.
